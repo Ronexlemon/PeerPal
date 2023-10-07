@@ -1,0 +1,1 @@
+export const PeerPalAddress = "0x2a711dC7cAb0f472Da6779B9E6878366d6D3707A"
