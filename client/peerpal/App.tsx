@@ -5,6 +5,7 @@ import {
   rainbowWallet,
   ThirdwebProvider,
 } from '@thirdweb-dev/react-native';
+import { ScrollSepoliaTestnet } from '@thirdweb-dev/chains';
 import React from 'react';
 import {StyleSheet, Text, useColorScheme, View,SafeAreaView} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
@@ -23,7 +24,7 @@ const App = () => {
   return (
     
 <ThirdwebProvider
-      activeChain="mumbai"
+      activeChain={ScrollSepoliaTestnet}
        clientId={TW_CLIENT_ID} // uncomment this line after you set your clientId in the .env file
       supportedWallets={[metamaskWallet(), rainbowWallet(), localWallet()]}>
      {/* <AppInner /> */}
@@ -78,3 +79,4 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+// https://thirdweb.com/contracts/deploy/QmZdTtoQ13AttmUsabJ7PcwsPEcvXHYgvurEJroygquXXv

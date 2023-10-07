@@ -6,18 +6,26 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DropDownPicker from "react-native-dropdown-picker";
 import { useContract,useContractRead,useContractWrite } from "@thirdweb-dev/react-native";
 
+import { PeerPalAddress,ghoerc20 } from "./Address/address";
+import { ethers } from "ethers";
 
+import PeerPalAbi from "../components/Abi/PeerPal.json"
+import { peerabi } from "./Abi/peerabi";
+import { erc20abi } from "./Abi/peerabi";
 
 export default function MarketPage({navigation}:any){
     const [open,setOpen] = useState<boolean>(false);
     const [openDrop,setOpenDrop] = useState<boolean>(false);
     const [approve,setAppove] = useState<boolean>(false);
 
-    const [selectedOption, setSelectedOption] = useState<any>('FTM');
-    const [selectedOptionLoan, setSelectedOptionLoan] = useState<any>('LINK');
+    const [selectedOption, setSelectedOption] = useState<any>('ETH');
+    const [selectedOptionLoan, setSelectedOptionLoan] = useState<any>('GHO');
     
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownOpenLoan, setIsDropdownOpenLoan] = useState(false);
+
+  const [collateralvalue,setCollateralValue] = useState<any>();
+  const [loanValue,setLoanValue] = useState<any>();
 
 
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
@@ -28,25 +36,32 @@ const handleOptionChange = (option: any) => {
 const handleOptionChangeLoan = (option: any) => {
   setSelectedOptionLoan(option);
 };
-const handleApprove =async()=>{
-   await call();
-  //await callAllowToken();
 
-  setAppove(true);
-}
 const [value, setValue] = useState(null);
   const [items, setItems] = useState([
     {label: 'Apple', value: 'apple'},
     {label: 'Banana', value: 'banana'}
   ]);
-  const MaticPriceFeed = "0xd0D5e3DB44DE05E9F294BB0a3bEEaF030DE24Ada";
-  const MaticAddress = "0x0000000000000000000000000000000000001010";
+  const ETHPriceFeed = "0x59F1ec1f10bD7eD9B938431086bC1D9e233ECf41";
+  const ETHAddress = "0x914d7fec6aac8cd542e72bca78b30650d45643d7";
 
-  const LinkPriceFeed = "0x1C2252aeeD50e0c9B64bDfF2735Ee3C932F5C408";
-  const LinkToken= "0x326C977E6efc84E512bB9C30f76E30c160eD06FB";
+  const LinkPriceFeed = "0xFadA8b0737D4A3AE7118918B7E69E689034c0127" //"0xaC3E04999aEfE44D508cB3f9B972b0Ecd07c1efb";
+  const LinkToken= "0xD9692f1748aFEe00FACE2da35242417dd05a8615"// "0x7273ebbB21F8D8AcF2bC12E71a08937712E9E40c";
+//gho contract
+const { contract:conterc20 } = useContract(ghoerc20,erc20abi);
+const {mutateAsync:ApproveToken} = useContractWrite(conterc20,"approve");
+const approvegho = async ()=>{
+  try{
+const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther("1")] });
+  }catch(error){
+    console.log("error for approve",error);
+    console.info("contract Approve successs", data);
+  }
+
+} 
 
   //functions
-  const { contract } = useContract("0x2a711dC7cAb0f472Da6779B9E6878366d6D3707A");
+  const { contract } = useContract(PeerPalAddress,peerabi);
   const { mutateAsync: allowCollateralToken, isLoading } = useContractWrite(contract, "allowCollateralToken")
 
   const call = async () => {
@@ -63,12 +78,19 @@ const [value, setValue] = useState(null);
 
   const callAllowToken = async () => {
     try {
-      const data = await allowToken({ args: [MaticAddress,MaticPriceFeed] });
+      const data = await allowToken({ args: [ETHAddress,ETHPriceFeed] });
       console.info("contract call successs", data);
     } catch (err) {
       console.error("contract call failure", err);
     }
   }
+  const handleApprove =async()=>{
+    //await call();
+   //await callAllowToken();
+   await approvegho();
+ 
+   setAppove(true);
+ }
 
     return(
         <View style={styles.container}>
@@ -116,15 +138,15 @@ const [value, setValue] = useState(null);
       </View>
       <View style={styles.cardContent}>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Loan Base:</Text>
+          <Text style={styles.detailLabel}>Loan ETH:</Text>
           <Text style={styles.detailValue}>{item.loan}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Collateral Link:</Text>
+          <Text style={styles.detailLabel}>Collateral GHO:</Text>
           <Text style={styles.detailValue}>{item.collateral}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Interest Link:</Text>
+          <Text style={styles.detailLabel}>Interest GHO:</Text>
           <Text style={styles.detailValue}>{item.Interest}</Text>
         </View>
         <View style={styles.detailRow}>
@@ -153,8 +175,8 @@ const [value, setValue] = useState(null);
             open={isDropdownOpen}
             value={selectedOption}
             items={[
-              { label: "FTM", value: "FTM" },
-              { label: "LINK", value: "LINK" },
+              { label: "ETH", value: "ETH" },
+              { label: "GHO", value: "GHO" },
             ]}
             setOpen={setIsDropdownOpen}
             setValue={handleOptionChange}
@@ -163,8 +185,11 @@ const [value, setValue] = useState(null);
           />
           <TextInput
       style={styles.textInput}
-      placeholder="4 FTM"
+      placeholder="0.004 ETH"
       placeholderTextColor="green"
+      onChangeText={setCollateralValue}
+      value={collateralvalue}
+      
       
       
     />
@@ -173,8 +198,8 @@ const [value, setValue] = useState(null);
             open={isDropdownOpenLoan}
             value={selectedOptionLoan}
             items={[
-              { label: "FTM", value: "FTM" },
-              { label: "LINK", value: "LINK" },
+              { label: "ETH", value: "ETH" },
+              { label: "GHO", value: "GHO" },
             ]}
             setOpen={setIsDropdownOpenLoan}
             setValue={handleOptionChangeLoan}
@@ -183,8 +208,10 @@ const [value, setValue] = useState(null);
           />
            <TextInput
       style={styles.textInput}
-      placeholder="4 LINK"
+      placeholder="4 GHO"
       placeholderTextColor="green"
+      onChangeText={setLoanValue}
+      value={loanValue}
       
       
     />
