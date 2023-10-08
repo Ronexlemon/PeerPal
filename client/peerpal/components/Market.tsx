@@ -1,7 +1,10 @@
-import React,{useState} from "react"
-import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView } from "react-native"
+import React,{useState,useEffect} from "react"
+import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView, Alert } from "react-native"
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+//import DatePicker from 'react-native-datepicker';
+import DatePicker from 'react-native-date-picker'
+
 
 import DropDownPicker from "react-native-dropdown-picker";
 import { useContract,useContractRead,useContractWrite } from "@thirdweb-dev/react-native";
@@ -26,7 +29,13 @@ export default function MarketPage({navigation}:any){
 
   const [collateralvalue,setCollateralValue] = useState<any>();
   const [loanValue,setLoanValue] = useState<any>();
+  const [interestValue,setInterestValue] = useState<any>();
 
+  const [date, setDate] = useState(new Date());
+  const [duration, setDuration] = useState<any>();
+  const [opendate, setOpenDate] = useState(false)
+
+  const [requests,setRequests] = useState<any>([]);
 
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
 {"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"}]
@@ -52,7 +61,8 @@ const { contract:conterc20 } = useContract(ghoerc20,erc20abi);
 const {mutateAsync:ApproveToken} = useContractWrite(conterc20,"approve");
 const approvegho = async ()=>{
   try{
-const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther("1")] });
+const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther(collateralvalue)] });
+setAppove(true);
   }catch(error){
     console.log("error for approve",error);
     console.info("contract Approve successs", data);
@@ -91,6 +101,49 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
  
    setAppove(true);
  }
+//conversion toseconds 
+const convertToSeconds = (timeValue:any) => {
+  const selectedTime:any = new Date(timeValue); // Create a Date object from the selected time
+  const currentTime:any = new Date(); // Create a Date object for the current time
+
+  const differenceInSeconds = Math.floor((selectedTime - currentTime) / 1000); // Calculate the difference in seconds
+
+  return differenceInSeconds;
+};
+
+//create request
+const { mutateAsync: createRequest, isLoading:requestloading } = useContractWrite(contract, "createRequest")
+const createRequests = async () => {
+  try {
+    const data = await createRequest({ args: [duration,ethers.utils.parseEther(loanValue),ethers.utils.parseEther(collateralvalue), ETHAddress, LinkToken,ethers.utils.parseEther(interestValue)] });
+    console.info("contract call successs", data);
+  } catch (err) {
+    console.error("contract call failure", err);
+  }
+}
+
+const handlecreaterequest = async ()=>{
+  try{
+    if(duration !=null && loanValue !=null && interestValue !=null && collateralvalue !=null ){
+      await createRequests();
+    }else{
+      Alert.alert("please input all")
+    }
+
+  }catch(error){
+    console.log("the error to create request is", error);
+  }
+}
+
+//getAll requests
+const { data:getAllRequest, isLoading:getrequestData } = useContractRead(contract, "getAllRequest");
+
+// const handleDurationChange = (event) => {
+//   const timeValue = event.target.value;
+//   const seconds = convertToSeconds(timeValue);
+
+//   setDuration(parseInt(seconds)); // Convert the duration to an integer and update the state
+// };  
 
     return(
         <View style={styles.container}>
@@ -131,7 +184,7 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
            
                 </View> */}
                 <ScrollView  style={styles.scrollview}>
-                {data.map((item:any, index:any) => (
+                {getAllRequest?.map((item:any, index:any) => (
         <View key={index} style={styles.item}>
             <View style={styles.cardHeader}>
         <Text style={styles.headerText}>Loan Details</Text>
@@ -139,23 +192,23 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
       <View style={styles.cardContent}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Loan ETH:</Text>
-          <Text style={styles.detailValue}>{item.loan}</Text>
+          <Text style={styles.detailValue}>{Number(item.tokenAmountToBorrow)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Collateral GHO:</Text>
-          <Text style={styles.detailValue}>{item.collateral}</Text>
+          <Text style={styles.detailValue}>{Number(item.collateralAmount)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Interest GHO:</Text>
-          <Text style={styles.detailValue}>{item.Interest}</Text>
+          <Text style={styles.detailValue}>{Number(item.interest)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Deadline:</Text>
-          <Text style={styles.detailValue}>{item.days} days</Text>
+          <Text style={styles.detailValue}>{Number(item.duration)} days</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Status:</Text>
-          <Text style={[styles.detailValue, { color: item.status === 'Approved' ? 'green' : 'red' }]}>{item.status}</Text>
+          <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>Close</Text>:<Text>Open</Text>} </Text>
         </View>
       </View>
       <TouchableOpacity style={styles.lendButton}>
@@ -175,8 +228,8 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
             open={isDropdownOpen}
             value={selectedOption}
             items={[
-              { label: "ETH", value: "ETH" },
               { label: "GHO", value: "GHO" },
+              { label: "LINK", value: "LINK" },
             ]}
             setOpen={setIsDropdownOpen}
             setValue={handleOptionChange}
@@ -185,7 +238,7 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
           />
           <TextInput
       style={styles.textInput}
-      placeholder="0.004 ETH"
+      placeholder="10 GHO"
       placeholderTextColor="green"
       onChangeText={setCollateralValue}
       value={collateralvalue}
@@ -199,7 +252,7 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
             value={selectedOptionLoan}
             items={[
               { label: "ETH", value: "ETH" },
-              { label: "GHO", value: "GHO" },
+              { label: "USDC", value: "USDC" },
             ]}
             setOpen={setIsDropdownOpenLoan}
             setValue={handleOptionChangeLoan}
@@ -208,17 +261,42 @@ const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther
           />
            <TextInput
       style={styles.textInput}
-      placeholder="4 GHO"
+      placeholder="0.001 ETH"
       placeholderTextColor="green"
       onChangeText={setLoanValue}
       value={loanValue}
       
       
     />
+    <Text style={{color:"black"}}>Interest</Text>
+     <TextInput
+      style={styles.textInput}
+      placeholder="4 GHO"
+      placeholderTextColor="green"
+      onChangeText={setInterestValue}
+      value={interestValue}
+      
+      
+    />
+    <Button color="red" title="Duration" onPress={() => setOpenDate(true)} />
+    <DatePicker
+        modal
+        open={opendate}
+        date={date}
+        onConfirm={(date:any) => {
+          setOpenDate(false)
+          const timeinsec = convertToSeconds(date);
+          setDuration(timeinsec);
+          setDate(date)
+        }}
+        onCancel={() => {
+          setOpenDate(false)
+        }}
+      />
     
               <View  style={styles.confirmButtons}>
                 <Button color="red" title="Close" onPress={() => setOpen(false)} />
-                {approve?<Button color="green" title="Confirm" onPress={() => setOpen(false)} />:<Button  title="Approve" onPress={handleApprove} />}
+                {approve?<Button color="green" title="Confirm" onPress={handlecreaterequest} />:<Button  title="Approve" onPress={handleApprove} />}
                  
                 
               </View>
@@ -397,7 +475,7 @@ const styles = StyleSheet.create({
         flexDirection: "column",
     justifyContent: "space-around",
     alignItems: "center",
-    gap:84
+    gap:20
     
 
       },
@@ -417,6 +495,10 @@ const styles = StyleSheet.create({
         flexDirection:"row",
         marginRight:"3%"
 
-    }
+    },
+    datePickerStyle: {
+      width: 200,
+      marginTop: 20,
+    },
 
 })
