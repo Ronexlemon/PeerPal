@@ -7,7 +7,7 @@ import DatePicker from 'react-native-date-picker'
 
 
 import DropDownPicker from "react-native-dropdown-picker";
-import { useContract,useContractRead,useContractWrite } from "@thirdweb-dev/react-native";
+import { Transaction, useContract,useContractRead,useContractWrite } from "@thirdweb-dev/react-native";
 
 import { PeerPalAddress,ghoerc20 } from "./Address/address";
 import { ethers } from "ethers";
@@ -15,6 +15,7 @@ import { ethers } from "ethers";
 import PeerPalAbi from "../components/Abi/PeerPal.json"
 import { peerabi } from "./Abi/peerabi";
 import { erc20abi } from "./Abi/peerabi";
+import { hexValue } from "ethers/lib/utils";
 
 export default function MarketPage({navigation}:any){
     const [open,setOpen] = useState<boolean>(false);
@@ -36,6 +37,12 @@ export default function MarketPage({navigation}:any){
   const [opendate, setOpenDate] = useState(false)
 
   const [requests,setRequests] = useState<any>([]);
+
+  const [loanIndex,setLoanIndex] = useState<any>();
+
+  const [ethvalue,setEthValue] = useState<any>();
+
+  const [lendopen,setLendOpen] = useState<boolean>(true);
 
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
 {"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"}]
@@ -145,6 +152,68 @@ const { data:getAllRequest, isLoading:getrequestData } = useContractRead(contrac
 //   setDuration(parseInt(seconds)); // Convert the duration to an integer and update the state
 // };  
 
+//convertSeconds to days
+const currentTimeInSeconds = ()=>{
+    const current_time_seconds = Math.floor(Date.now() / 1000);
+    return current_time_seconds;
+  }
+
+const convertSecondsToDHMS = (seconds:any) => {
+  const secondsInDay = 24 * 60 * 60;
+  const secondsInHour = 60 * 60;
+  const secondsInMinute = 60;
+
+  const days = Math.floor(seconds / secondsInDay);
+  seconds %= secondsInDay;
+
+  const hours = Math.floor(seconds / secondsInHour);
+  seconds %= secondsInHour;
+
+  const minutes = Math.floor(seconds / secondsInMinute);
+  seconds %= secondsInMinute;
+
+  return {
+    days,
+    hours,
+    minutes,
+    seconds
+  };
+};
+
+//lending token
+
+const { mutateAsync: lendToken, isLoading:istokenLended } = useContractWrite(contract, "lend")
+
+  const lendtoken = async () => {
+    
+    try {
+      const data = await lendToken( {  args: [loanIndex],overrides:{value: ethvalue}});
+      console.info("contract call successs", data);
+    } catch (err) {
+      console.error("contract call failure", err);
+    }
+  }
+  const handleLendConfirm =async ()=>{
+    try{
+      
+      if( loanIndex !=null){
+        await lendtoken();
+        Alert.alert("Successful");
+      }else{
+        Alert.alert("please try again");
+      }
+      
+  
+    }catch(error){
+      console.log("Error to lend token",error);
+    }
+  }
+const handleLend = async(_index:any,_ethvalue:any)=>{
+   setLoanIndex(_index);
+   setEthValue(_ethvalue);
+   setLendOpen(false);
+  
+}
     return(
         <View style={styles.container}>
            
@@ -204,16 +273,19 @@ const { data:getAllRequest, isLoading:getrequestData } = useContractRead(contrac
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Deadline:</Text>
-          <Text style={styles.detailValue}>{Number(item.duration)} days</Text>
+          <Text style={styles.detailValue}>{convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).days} days {convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).hours} hrs {convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).minutes} min </Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Status:</Text>
           <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>Close</Text>:<Text>Open</Text>} </Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.lendButton}>
+      {lendopen?<TouchableOpacity style={styles.lendButton} onPress={()=>{handleLend(index,item.tokenAmountToBorrow)}}>
         <Text style={styles.buttonText}>Lend</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>:<TouchableOpacity style={styles.lendButton} onPress={handleLendConfirm}>
+        <Text style={styles.buttonTextConfrim}>Confirm</Text>
+      </TouchableOpacity>}
+      
     </View>
       ))}
                 </ScrollView>
@@ -396,6 +468,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  buttonTextConfrim: {
+    color: 'green',
     fontSize: 18,
     fontWeight: 'bold',
   },
