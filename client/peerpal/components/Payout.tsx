@@ -15,8 +15,13 @@ import { useUser } from "@thirdweb-dev/react-native";
 
 
 
+
+
 export default function PayoutPage({navigation}:any){
+  const [loanIndex,setLoanIndex] = useState<any>();
   const [userAddress,setUserAddress] = useState<any>();
+  const [repayopen,setrepayopen] = useState<boolean>(false);
+
 
   //functions
   const { contract } = useContract(PeerPalAddress,peerabi);
@@ -67,10 +72,28 @@ return {
 };
 };
 
+const { mutateAsync: repay, isLoading:loadingrepay } = useContractWrite(contract, "repay")
+
+const repayLoan = async () => {
+  try {
+    const data = await repay({ args: [loanIndex] });
+    console.info("contract call successs", data);
+  } catch (err) {
+    console.error("contract call failure", err);
+  }
+}
+const handlePayout = async()=>{
+await repayLoan();
+}
+const handleRepaySetIndex =(index:any)=>{
+  setLoanIndex(index);
+  setrepayopen(true);
+
+}
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
 {"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"}]
 
-
+//cALL R
 useEffect(()=>{
   setUserAddress(user?.address);
   console.log("user Address",address);
@@ -137,9 +160,12 @@ useEffect(()=>{
           <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>Close</Text>:<Text>Open</Text>} </Text>
         </View>
       </View>
-      <TouchableOpacity style={styles.lendButton}>
+      {repayopen? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
+        <Text style={styles.buttonTextGreen}>Confirm</Text>
+      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index)}}>
         <Text style={styles.buttonText}>Repay</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>}
+     
     </View>
       ))}
                 </ScrollView>
@@ -235,6 +261,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  buttonTextGreen: {
+    color: 'green',
     fontSize: 18,
     fontWeight: 'bold',
   },

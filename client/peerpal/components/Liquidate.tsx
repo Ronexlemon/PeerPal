@@ -1,20 +1,111 @@
-import React,{useState} from "react"
+import React,{useState,useEffect} from "react"
 import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView } from "react-native"
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import DropDownPicker from "react-native-dropdown-picker";
+import { peerabi } from "./Abi/peerabi";
+import { erc20abi } from "./Abi/peerabi";
+import { PeerPalAddress,ghoerc20 } from "./Address/address";
+import { ethers } from "ethers";
+import { Transaction, useContract,useContractRead,useContractWrite,useAddress } from "@thirdweb-dev/react-native";
+
+import { Account } from "@thirdweb-dev/react-native";
+import { useUser } from "@thirdweb-dev/react-native";
+
+
 
 
 
 export default function LiquidatePage({navigation}:any){
-    
+  const [loanIndex,setLoanIndex] = useState<any>();
+  const [userAddress,setUserAddress] = useState<any>();
+  const [repayopen,setrepayopen] = useState<boolean>(false);
 
+
+  //functions
+  const { contract } = useContract(PeerPalAddress,peerabi);
+    
+//userAddress
+const { user, isLoggedIn, isLoading:userloading } = useUser();
+const address = useAddress();
+//getAlluserRequests
+const add = "0x65E28C9C4Ef1a756d8df1c507b7A84eFcF606fd4"
+const { data:userRequests, isLoading } = useContractRead(contract, "getMyRequest", [address]);
+
+
+//conversion toseconds 
+const convertToSeconds = (timeValue:any) => {
+  const selectedTime:any = new Date(timeValue); // Create a Date object from the selected time
+  const currentTime:any = new Date(); // Create a Date object for the current time
+
+  const differenceInSeconds = Math.floor((selectedTime - currentTime) / 1000); // Calculate the difference in seconds
+
+  return differenceInSeconds;
+};
+
+//convertSeconds to days
+const currentTimeInSeconds = ()=>{
+  const current_time_seconds = Math.floor(Date.now() / 1000);
+  return current_time_seconds;
+}
+
+const convertSecondsToDHMS = (seconds:any) => {
+const secondsInDay = 24 * 60 * 60;
+const secondsInHour = 60 * 60;
+const secondsInMinute = 60;
+
+const days = Math.floor(seconds / secondsInDay);
+seconds %= secondsInDay;
+
+const hours = Math.floor(seconds / secondsInHour);
+seconds %= secondsInHour;
+
+const minutes = Math.floor(seconds / secondsInMinute);
+seconds %= secondsInMinute;
+
+return {
+  days,
+  hours,
+  minutes,
+  seconds
+};
+};
+
+//get all
+const { data:dashboardData, isLoading:dashboardload } = useContractRead(contract, "getAllDashBoard", [address])
+
+
+
+
+const { mutateAsync: liquidate, isLoading:liquidateloading } = useContractWrite(contract, "liquidate")
+
+  const liquidateLoan = async () => {
+    try {
+      const data = await liquidate({ args: [loanIndex] });
+      console.info("contract call successs", data);
+    } catch (err) {
+      console.error("contract call failure", err);
+    }
+  }
+const handlePayout = async()=>{
+await liquidateLoan();
+}
+const handleRepaySetIndex =(index:any)=>{
+  setLoanIndex(index);
+  setrepayopen(true);
+
+}
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
 {"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"}]
 
+//cALL R
+useEffect(()=>{
+  setUserAddress(user?.address);
+  console.log("user Address",address);
 
 
+},[])
     return(
         <View style={styles.container}>
            
@@ -48,36 +139,34 @@ export default function LiquidatePage({navigation}:any){
            
                 </View> */}
                 <ScrollView  style={styles.scrollview}>
-                {data.map((item:any, index:any) => (
+                {dashboardData?.map((item:any, index:any) => (
         <View key={index} style={styles.item}>
-            <View style={styles.cardHeader}>
-        <Text style={styles.headerText}>Loan Details</Text>
-      </View>
+            
       <View style={styles.cardContent}>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Loan Base:</Text>
-          <Text style={styles.detailValue}>{item.loan}</Text>
+          <Text style={styles.detailLabel}>borrower </Text>
+          <Text style={styles.detailValue}>{(item.borrower).substring(0,8)}...{(item.borrower).substring(9,17)}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Collateral Link:</Text>
-          <Text style={styles.detailValue}>{item.collateral}</Text>
+        <Text style={styles.detailLabel}>Loan ETH:</Text>
+          <Text style={styles.detailValue}>{Number(item.tokenBorrowed)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Interest Link:</Text>
-          <Text style={styles.detailValue}>{item.Interest}</Text>
+        <Text style={styles.detailLabel}>Collateral GHO:</Text>
+          <Text style={styles.detailValue}>{Number(item.collateral)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Deadline:</Text>
-          <Text style={styles.detailValue}>{item.days} days</Text>
+        <Text style={styles.detailLabel}>Interest GHO:</Text>
+          <Text style={styles.detailValue}>{Number(item._profit)/10**18}</Text>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Status:</Text>
-          <Text style={[styles.detailValue, { color: item.status === 'Approved' ? 'green' : 'red' }]}>{item.status}</Text>
-        </View>
+       
       </View>
-      <TouchableOpacity style={styles.lendButton}>
+      {repayopen? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
+        <Text style={styles.buttonTextGreen}>Confirm</Text>
+      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index)}}>
         <Text style={styles.buttonText}>Liquidate</Text>
-      </TouchableOpacity>
+      </TouchableOpacity>}
+     
     </View>
       ))}
                 </ScrollView>
@@ -173,6 +262,11 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  buttonTextGreen: {
+    color: 'green',
     fontSize: 18,
     fontWeight: 'bold',
   },
