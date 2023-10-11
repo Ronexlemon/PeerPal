@@ -22,6 +22,8 @@ export default function PayoutPage({navigation}:any){
   const [userAddress,setUserAddress] = useState<any>();
   const [repayopen,setrepayopen] = useState<boolean>(false);
 
+  const [repayAmount,setrepayAmount] = useState<any>();
+
 
   //functions
   const { contract } = useContract(PeerPalAddress,peerabi);
@@ -76,7 +78,7 @@ const { mutateAsync: repay, isLoading:loadingrepay } = useContractWrite(contract
 
 const repayLoan = async () => {
   try {
-    const data = await repay({ args: [loanIndex] });
+    const data = await repay({ args: [loanIndex],overrides:{value: ethers.utils.parseEther(repayAmount)} });
     console.info("contract call successs", data);
   } catch (err) {
     console.error("contract call failure", err);
@@ -85,8 +87,9 @@ const repayLoan = async () => {
 const handlePayout = async()=>{
 await repayLoan();
 }
-const handleRepaySetIndex =(index:any)=>{
+const handleRepaySetIndex =(index:any,_repayAmount:any)=>{
   setLoanIndex(index);
+  setrepayAmount(_repayAmount);
   setrepayopen(true);
 
 }
@@ -97,9 +100,10 @@ const handleRepaySetIndex =(index:any)=>{
 useEffect(()=>{
   setUserAddress(user?.address);
   console.log("user Address",address);
+  console.log("user amount",repayAmount);
 
 
-},[])
+},[repayAmount])
     return(
         <View style={styles.container}>
            
@@ -162,7 +166,7 @@ useEffect(()=>{
       </View>
       {repayopen? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
         <Text style={styles.buttonTextGreen}>Confirm</Text>
-      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index)}}>
+      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index,(item.interest+ item.tokenAmountToBorrow))}}>
         <Text style={styles.buttonText}>Repay</Text>
       </TouchableOpacity>}
      

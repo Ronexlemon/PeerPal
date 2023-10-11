@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from "react"
-import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView, Alert } from "react-native"
+import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView, Alert,ActivityIndicator } from "react-native"
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 //import DatePicker from 'react-native-datepicker';
@@ -18,6 +18,7 @@ import { erc20abi } from "./Abi/peerabi";
 import { hexValue } from "ethers/lib/utils";
 
 export default function MarketPage({navigation}:any){
+  const [loading,setLoadingActivity] = useState<boolean>(false);
     const [open,setOpen] = useState<boolean>(false);
     const [openDrop,setOpenDrop] = useState<boolean>(false);
     const [approve,setAppove] = useState<boolean>(false);
@@ -65,7 +66,7 @@ const [value, setValue] = useState(null);
   const LinkToken= "0xD9692f1748aFEe00FACE2da35242417dd05a8615"// "0x7273ebbB21F8D8AcF2bC12E71a08937712E9E40c";
 //gho contract
 const { contract:conterc20 } = useContract(ghoerc20,erc20abi);
-const {mutateAsync:ApproveToken} = useContractWrite(conterc20,"approve");
+const {mutateAsync:ApproveToken,isSuccess:approveSuccess} = useContractWrite(conterc20,"approve");
 const approvegho = async ()=>{
   try{
 const data = await ApproveToken({ args: [PeerPalAddress, ethers.utils.parseEther(collateralvalue)] });
@@ -105,8 +106,14 @@ setAppove(true);
     //await call();
    //await callAllowToken();
    await approvegho();
- 
-   setAppove(true);
+   setLoadingActivity(true)
+   setTimeout(() => {
+    setAppove(true);
+    setLoadingActivity(false); // You can remove this line if it's not needed
+  }, 1000); //
+   
+   
+
  }
 //conversion toseconds 
 const convertToSeconds = (timeValue:any) => {
@@ -214,6 +221,12 @@ const handleLend = async(_index:any,_ethvalue:any)=>{
    setLendOpen(false);
   
 }
+useEffect(()=>{
+  if(approveSuccess){
+    //setLoadingActivity(false);
+    console.log("success",approveSuccess);
+  }
+},[approveSuccess])
     return(
         <View style={styles.container}>
            
@@ -268,7 +281,7 @@ const handleLend = async(_index:any,_ethvalue:any)=>{
           <Text style={styles.detailValue}>{Number(item.collateralAmount)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Interest GHO:</Text>
+          <Text style={styles.detailLabel}>Interest ETH:</Text>
           <Text style={styles.detailValue}>{Number(item.interest)/10**18}</Text>
         </View>
         <View style={styles.detailRow}>
@@ -343,7 +356,7 @@ const handleLend = async(_index:any,_ethvalue:any)=>{
     <Text style={{color:"black"}}>Interest</Text>
      <TextInput
       style={styles.textInput}
-      placeholder="4 GHO"
+      placeholder="0.01 ETH"
       placeholderTextColor="green"
       onChangeText={setInterestValue}
       value={interestValue}
@@ -379,6 +392,12 @@ const handleLend = async(_index:any,_ethvalue:any)=>{
 
         </View>
       )}
+{loading ? (
+        <View style={styles.activityIndicatorContainer}>
+          <ActivityIndicator size="large" color="green" />
+          <Text>Waiting ...</Text>
+        </View>
+      ) : null}
 
         </View>
     )
@@ -576,6 +595,15 @@ const styles = StyleSheet.create({
     datePickerStyle: {
       width: 200,
       marginTop: 20,
+    },
+    activityIndicatorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.5)', // Add a semi-transparent background
     },
 
 })
