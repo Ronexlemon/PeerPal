@@ -45,6 +45,9 @@ export default function MarketPage({navigation}:any){
 
   const [lendopen,setLendOpen] = useState<boolean>(true);
 
+  const [selectedCardIndex, setSelectedCardIndex] = useState<any>(null); // Track selected card index
+
+
     const data:any =[{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},
 {"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"},{"loan":12,"collateral":13,"Interest":3,"days":60,"status":"request"}]
 const handleOptionChange = (option: any) => {
@@ -140,6 +143,8 @@ const handlecreaterequest = async ()=>{
   try{
     if(duration !=null && loanValue !=null && interestValue !=null && collateralvalue !=null ){
       await createRequests();
+      setOpen(false);
+      
     }else{
       Alert.alert("please input all")
     }
@@ -205,7 +210,7 @@ const { mutateAsync: lendToken, isLoading:istokenLended } = useContractWrite(con
       
       if( loanIndex !=null){
         await lendtoken();
-        Alert.alert("Successful");
+        Alert.alert("Successful ✓");
       }else{
         Alert.alert("please try again");
       }
@@ -225,6 +230,7 @@ useEffect(()=>{
   if(approveSuccess){
     //setLoadingActivity(false);
     console.log("success",approveSuccess);
+    console.log("item value",ethvalue);
   }
 },[approveSuccess])
     return(
@@ -266,7 +272,7 @@ useEffect(()=>{
            
                 </View> */}
                 <ScrollView  style={styles.scrollview}>
-                {getAllRequest?.map((item:any, index:any) => (
+                {/* {getAllRequest?.map((item:any, index:any) => (
         <View key={index} style={styles.item}>
             <View style={styles.cardHeader}>
         <Text style={styles.headerText}>Loan Details</Text>
@@ -286,6 +292,7 @@ useEffect(()=>{
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Deadline:</Text>
+          
           <Text style={styles.detailValue}>{convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).days} days {convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).hours} hrs {convertSecondsToDHMS( Number(item.duration)-currentTimeInSeconds()).minutes} min </Text>
         </View>
         <View style={styles.detailRow}>
@@ -293,6 +300,7 @@ useEffect(()=>{
           <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>Close</Text>:<Text>Open</Text>} </Text>
         </View>
       </View>
+    
       {lendopen?<TouchableOpacity style={styles.lendButton} onPress={()=>{handleLend(index,item.tokenAmountToBorrow)}}>
         <Text style={styles.buttonText}>Lend</Text>
       </TouchableOpacity>:<TouchableOpacity style={styles.lendButton} onPress={handleLendConfirm}>
@@ -300,7 +308,57 @@ useEffect(()=>{
       </TouchableOpacity>}
       
     </View>
-      ))}
+      ))} */}
+      {getAllRequest?.map((item: any, index: any) => (
+          <View key={index} style={styles.item}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.headerText}>Loan Details</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Loan ETH:</Text>
+                <Text style={styles.detailValue}>{Number(item.tokenAmountToBorrow) / 10 ** 18}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Collateral GHO:</Text>
+                <Text style={styles.detailValue}>{Number(item.collateralAmount) / 10 ** 18}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Interest ETH:</Text>
+                <Text style={styles.detailValue}>{Number(item.interest) / 10 ** 18}</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Deadline:</Text>
+                <Text style={styles.detailValue}>
+                  {convertSecondsToDHMS(Number(item.duration) - currentTimeInSeconds()).days} days{' '}
+                  {convertSecondsToDHMS(Number(item.duration) - currentTimeInSeconds()).hours} hrs{' '}
+                  {convertSecondsToDHMS(Number(item.duration) - currentTimeInSeconds()).minutes} min
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Status:</Text>
+                <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>
+                  {item.lended ? <Text>Close</Text> : <Text>Open</Text>}{' '}
+                </Text>
+              </View>
+            </View>
+            {selectedCardIndex === index ? ( // Show "Confirm" button for the selected card
+              <TouchableOpacity style={styles.lendButton} onPress={handleLendConfirm}>
+                <Text style={styles.buttonTextConfrim}>Confirm</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.lendButton}
+                onPress={() => {
+                  setSelectedCardIndex(index); // Set selected card index here
+                  handleLend(index, item.tokenAmountToBorrow);
+                }}
+              >
+                <Text style={styles.buttonText}>Lend</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
                 </ScrollView>
                 
            
@@ -479,7 +537,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   lendButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#AED6F1',
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',

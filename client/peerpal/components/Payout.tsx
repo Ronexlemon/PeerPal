@@ -24,6 +24,9 @@ export default function PayoutPage({navigation}:any){
 
   const [repayAmount,setrepayAmount] = useState<any>();
 
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
+
+
 
   //functions
   const { contract } = useContract(PeerPalAddress,peerabi);
@@ -161,12 +164,12 @@ useEffect(()=>{
         </View>
         <View style={styles.detailRow}>
         <Text style={styles.detailLabel}>Status:</Text>
-          <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>Close</Text>:<Text>Open</Text>} </Text>
+          <Text style={[styles.detailValue, { color: item.lended ? 'red' : 'green' }]}>{item.lended?<Text>repay</Text>:<Text>active</Text>} </Text>
         </View>
       </View>
-      {repayopen? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
+      {repayopen && selectedCardIndex === index ? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
         <Text style={styles.buttonTextGreen}>Confirm</Text>
-      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index,(item.interest+ item.tokenAmountToBorrow))}}>
+      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{setSelectedCardIndex(index);handleRepaySetIndex(index,(item.interest+ item.tokenAmountToBorrow))}}>
         <Text style={styles.buttonText}>Repay</Text>
       </TouchableOpacity>}
      
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   lendButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#AED6F1',
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',

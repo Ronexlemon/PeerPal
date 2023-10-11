@@ -18,16 +18,24 @@ const [showConnect, setShowConnect] = useState<boolean>(true);
     return(
         <View style={styles.container}>
         <Image source={require("../assests/logo.png")} style={styles.imagelogo} />
-        <Text style={styles.text}>One for All, All for One</Text>
+        <Text style={styles.text}>Your Assets, Your Control</Text>
         <View style={styles.buttonstart}>
           {account ? (
-            <View style={styles.buttonConnect}><View style={styles.button}><Button  title="START" onPress={() => navigation.navigate("Market")} /></View>
-            <Connect/>
+            <View style={styles.buttonConnect}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate("Market")}
+            >
+              <Text style={styles.buttonText}>START</Text>
+            </TouchableOpacity>
+            <View style={styles.button}>
+              <Connect />
             </View>
+          </View>
             
             
           ) : (<View >
-            {showConnect && <Button  title="Connect"  onPress={handleConnectPress} />}
+            {showConnect && <TouchableOpacity    onPress={handleConnectPress} ><Text style={styles.buttonText}>LAUNCH</Text></TouchableOpacity>}
             </View>
             
             
@@ -53,7 +61,10 @@ const styles = StyleSheet.create({
     text:{
         color:"black",
         fontSize:30,
-        marginTop:"20%"
+        marginTop:"20%",
+        fontFamily:"cochin",
+        fontStyle: "italic", // Use fontStyle to set the text to italic
+  fontWeight: "bold" 
 
     },
     buttonstart:{
@@ -70,13 +81,19 @@ const styles = StyleSheet.create({
     buttonConnect:{
         flexDirection:"row",
         width:"100%",
-        height:"50%",
+        height:"60%",
         
         justifyContent:"space-around"
     },
     button:{
         height:40,
 
-    }
+    },
+   
+    buttonText: {
+      color: 'white',
+      fontSize: 18,
+      fontWeight: 'bold',
+    },
 
 })

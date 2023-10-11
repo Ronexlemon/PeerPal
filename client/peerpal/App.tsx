@@ -30,11 +30,11 @@ const App = () => {
      {/* <AppInner /> */}
      <NavigationContainer>
       <stack.Navigator>
-        <stack.Screen name='Home' component={LandingPage}/>
-        <stack.Screen name='Market' component={MarketPage}/>
-        <stack.Screen name='Counter' component={Counter}/>
-        <stack.Screen name='Liquidate' component={LiquidatePage}/>
-        <stack.Screen name='Payout' component={PayoutPage}/>
+        <stack.Screen name='Home' component={LandingPage}  options={{ headerShown: false }} />
+        <stack.Screen name='Market' component={MarketPage}  options={{ headerShown: false }} />
+        <stack.Screen name='Counter' component={Counter}  options={{ headerShown: false }} />
+        <stack.Screen name='Liquidate' component={LiquidatePage}  options={{ headerShown: false }} />
+        <stack.Screen name='Payout' component={PayoutPage}  options={{ headerShown: false }} />
       </stack.Navigator>
 
      </NavigationContainer>

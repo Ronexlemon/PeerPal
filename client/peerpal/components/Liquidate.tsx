@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from "react"
-import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView } from "react-native"
+import { StyleSheet,SafeAreaView,View,Text,Image, Button,TouchableOpacity,Pressable,TextInput,ScrollView,ActivityIndicator } from "react-native"
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -22,7 +22,10 @@ export default function LiquidatePage({navigation}:any){
   const [userAddress,setUserAddress] = useState<any>();
   const [repayopen,setrepayopen] = useState<boolean>(false);
 
+  const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
 
+
+  const [loading,setLoadingActivity] = useState<boolean>(true);
   //functions
   const { contract } = useContract(PeerPalAddress,peerabi);
     
@@ -73,7 +76,7 @@ return {
 };
 
 //get all
-const { data:dashboardData, isLoading:dashboardload } = useContractRead(contract, "getAllDashBoard", [address])
+const { data:dashboardData, isLoading:dashboardload,isSuccess } = useContractRead(contract, "getAllDashBoard", [address])
 
 
 
@@ -103,9 +106,12 @@ const handleRepaySetIndex =(index:any)=>{
 useEffect(()=>{
   setUserAddress(user?.address);
   console.log("user Address",address);
+  if(isSuccess){
+    setLoadingActivity(false);
+  }
 
 
-},[])
+},[loading])
     return(
         <View style={styles.container}>
            
@@ -161,14 +167,20 @@ useEffect(()=>{
         </View>
        
       </View>
-      {repayopen? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
+      {repayopen && selectedCardIndex === index? <TouchableOpacity style={styles.lendButton} onPress={handlePayout}>
         <Text style={styles.buttonTextGreen}>Confirm</Text>
-      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{handleRepaySetIndex(index)}}>
+      </TouchableOpacity>: <TouchableOpacity style={styles.lendButton} onPress={()=>{setSelectedCardIndex(index);handleRepaySetIndex(index)}}>
         <Text style={styles.buttonText}>Liquidate</Text>
       </TouchableOpacity>}
      
     </View>
       ))}
+      {/* {loading ? (
+        <View style={styles.activityIndicatorContainer}>
+          <ActivityIndicator size="large" color="green" />
+          <Text>...</Text>
+        </View>
+      ) : null} */}
                 </ScrollView>
                 
            
@@ -254,7 +266,7 @@ const styles = StyleSheet.create({
     color:"black"
   },
   lendButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#AED6F1',
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',
@@ -356,6 +368,16 @@ const styles = StyleSheet.create({
         marginTop:"20%"
 
     },
+    activityIndicatorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0,0,0,0.5)', // Add a semi-transparent background
+    },
+
    
 
 })
