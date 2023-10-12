@@ -122,6 +122,8 @@ contract PeerPal is Ownable, ReentrancyGuard {
         require(info.tokenAmountToBorrow == msg.value, "wrong amount");
         // IERC20(info.tokenAddressToBorrow).transferFrom(msg.sender, info.userRequest, info.tokenAmountToBorrow);
         payable(info.userRequest).transfer(info.tokenAmountToBorrow);
+        // require(payable(info.userRequest).send(info.tokenAmountToBorrow), "Transfer failed");
+
 
         // Create a new Information struct with msg.sender as the lender
         Information memory updatedInfo = Information(
