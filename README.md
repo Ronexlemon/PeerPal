@@ -23,4 +23,22 @@ https://github.com/Ronexlemon/Peerpal/assets/68167040/1fcafd41-994c-41c9-bd18-7e
 
 
 
-dfwfbyuwefyueu
+# Get Started
+
+```
+$ git clone https://github.com/Ronexlemon/Peerpal.git
+```
+```
+cd client/peerpal
+```
+
+```
+yarn install
+```
+
+```
+npm start 
+```
+```
+npx react-native run-android
+```
