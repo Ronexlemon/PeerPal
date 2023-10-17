@@ -4,7 +4,10 @@ Mobile p2p dapp
 https://sepolia-blockscout.scroll.io/address/0x9cf4f5adc60ba52759AC9D9f5Ee69704a661bF0C#code
 
 # Contract Address
+```
 0x9cf4f5adc60ba52759AC9D9f5Ee69704a661bF0C
+```
+
 
 # What it does
 peerpal is a peer to peer lending and borrowing mobile application which is build on top of of scroll network due to low gas fee, it also offers liquidation and payment of assets all within the app.
@@ -35,6 +38,7 @@ cd client/peerpal
 ```
 yarn install
 ```
+
 
 ```
 npm start 
