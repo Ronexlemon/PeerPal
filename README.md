@@ -19,6 +19,8 @@ peerpal is a peer to peer lending and borrowing mobile application which is buil
   ->  used thirdwed to laverage the smart contract on a mobile environment since mobile are more accesible and mobility than web apps always on the go
 3. Scroll Network
   -> Used scroll network since its fast and offer low gas price
+4. React Native
+  -> Laverage react native for the cross platform capabilities 
 # Video Demo
 
 
